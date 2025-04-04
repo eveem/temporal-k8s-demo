@@ -1,0 +1,89 @@
+apiVersion: networking.istio.io/v1
+kind: Gateway
+metadata:
+  name: common-gateway
+  namespace: istio-system
+spec:
+  selector:
+    istio: ingressgateway
+  servers:
+    - hosts:
+        - '*.demo'
+      port:
+        name: https
+        number: 443
+        protocol: HTTPS
+      tls:
+        cipherSuites:
+          - ECDHE-RSA-CHACHA20-POLY1305
+          - ECDHE-RSA-AES256-GCM-SHA384
+          - ECDHE-RSA-AES256-SHA
+          - AES256-GCM-SHA384
+          - AES256-SHA
+        credentialName: istio-ingressgateway-certs
+        minProtocolVersion: TLSV1_2
+        mode: SIMPLE
+---
+apiVersion: networking.istio.io/v1
+kind: VirtualService
+metadata:
+  name: ingress-temporal-virtual-service
+  namespace: temporal
+spec:
+  gateways:
+    - istio-system/common-gateway
+  hosts:
+    - ingress-temporal.demo
+  http:
+    - match:
+        - uri:
+            prefix: /temporal-ui
+      route:
+        - destination:
+            host: temporal-ui
+            port:
+              number: 8080
+    - match:
+        - uri:
+            prefix: /temporal
+      route:
+        - destination:
+            host: temporal
+            port:
+              number: 7233
+---
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: temporal
+  namespace: temporal
+spec:
+  host: temporal
+  trafficPolicy:
+    tls:
+      mode: ISTIO_MUTUAL
+  subsets:
+  - name: stable
+    labels:
+      release: "stable"
+  - name: candidate
+    labels:
+      release: "stable"
+---
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: temporal-ui
+  namespace: temporal
+spec:
+  host: temporal-ui
+  trafficPolicy:
+    tls:
+      mode: ISTIO_MUTUAL
+  subsets:
+  - name: stable
+    labels:
+      release: "stable"
+  - name: candidate
+    labels:
+      release: "stable"

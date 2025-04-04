@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: temporal-worker
+  namespace: temporal
+  labels:
+    app: temporal-worker
+spec:
+  containers:
+    - name: temporal-worker
+      image: temporal-worker:0.0.1
+  imagePullSecrets:
+    - name: regcred

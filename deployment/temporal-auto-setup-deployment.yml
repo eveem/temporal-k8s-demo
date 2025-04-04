@@ -1,0 +1,106 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: temporal
+  namespace: temporal
+spec:
+  type: ClusterIP
+  ports:
+    - port: 7243
+      targetPort: 7243
+      name: http
+    - port: 7233
+      targetPort: 7233
+      name: grpc
+    - port: 6933
+      targetPort: 6933
+      name: membership
+  selector:
+    app: temporal
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: temporal
+  name: temporal
+  namespace: temporal
+spec:
+  progressDeadlineSeconds: 600
+  replicas: 1
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app: temporal
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: temporal
+    spec:
+      containers:
+      - env:
+        - name: DB
+          value: postgres12
+        - name: SKIP_SCHEMA_SETUP
+          value: "false"
+        - name: SKIP_DB_CREATE
+          value: "false"
+        - name: DBNAME
+          value: temporal
+        - name: VISIBILITY_DBNAME
+          value: temporal_visibility
+        - name: DB_PORT
+          value: "5432"
+        - name: POSTGRES_SEEDS
+          value: "<postgres_ip>"
+        - name: POSTGRES_USER
+          value: "<postgres_user>"
+        - name: POSTGRES_PWD
+          value: "<postgres_password>"
+        image: temporalio/auto-setup:latest
+        imagePullPolicy: Always
+        ports:
+          - containerPort: 7233
+        readinessProbe:
+          exec:
+            command:
+            - ls
+            - /
+          failureThreshold: 3
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          successThreshold: 1
+          timeoutSeconds: 1        
+        livenessProbe:
+          exec:
+            command:
+            - ls
+            - /
+          failureThreshold: 3
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          successThreshold: 1
+          timeoutSeconds: 1
+        name: temporal
+        resources:
+          limits:
+            cpu: 500m
+            memory: 500Mi
+          requests:
+            cpu: 100m
+            memory: 100Mi
+        securityContext:
+          allowPrivilegeEscalation: false
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      terminationGracePeriodSeconds: 30
