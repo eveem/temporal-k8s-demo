@@ -8,7 +8,6 @@ docker build -t temporal-worker:0.0.1 .
 apply common component if using istio
 - Gateway
 - VirtualService
-- DestinationRule
 ```
 kubectl apply -f deployment/temporal-common.yml
 ```

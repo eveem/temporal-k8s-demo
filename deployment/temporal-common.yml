@@ -51,39 +51,3 @@ spec:
             host: temporal
             port:
               number: 7233
----
-apiVersion: networking.istio.io/v1beta1
-kind: DestinationRule
-metadata:
-  name: temporal
-  namespace: temporal
-spec:
-  host: temporal
-  trafficPolicy:
-    tls:
-      mode: ISTIO_MUTUAL
-  subsets:
-  - name: stable
-    labels:
-      release: "stable"
-  - name: candidate
-    labels:
-      release: "stable"
----
-apiVersion: networking.istio.io/v1beta1
-kind: DestinationRule
-metadata:
-  name: temporal-ui
-  namespace: temporal
-spec:
-  host: temporal-ui
-  trafficPolicy:
-    tls:
-      mode: ISTIO_MUTUAL
-  subsets:
-  - name: stable
-    labels:
-      release: "stable"
-  - name: candidate
-    labels:
-      release: "stable"
